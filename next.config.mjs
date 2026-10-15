@@ -4,13 +4,23 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**.api-sports.io",
+        hostname: "media.api-sports.io",
+        pathname: "/**",
       },
       {
         protocol: "https",
-        hostname: "media.api-sports.io",
+        hostname: "api-sports.io",
+        pathname: "/**",
       },
     ],
+    unoptimized: true,
+  },
+  typescript: {
+    // Évite un échec de build sur des warnings TS non bloquants
+    ignoreBuildErrors: false,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 };
 

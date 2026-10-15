@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
@@ -15,9 +15,11 @@ export default function ConnexionPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  if (!loading && user) {
-    router.replace("/");
-  }
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace("/");
+    }
+  }, [loading, user, router]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -52,6 +54,12 @@ export default function ConnexionPage() {
     setSubmitting(false);
   };
 
+  if (loading) {
+    return (
+      <div className="text-center text-gray-400 py-12">Chargement…</div>
+    );
+  }
+
   return (
     <div className="max-w-md mx-auto">
       <div className="mb-6 text-center">
@@ -76,8 +84,8 @@ export default function ConnexionPage() {
             <code className="text-xs bg-black/30 px-1 rounded">
               NEXT_PUBLIC_SUPABASE_ANON_KEY
             </code>{" "}
-            dans <code className="text-xs">.env.local</code> (ou sur Vercel) pour
-            activer la connexion.
+            dans les variables d&apos;environnement Vercel pour activer la
+            connexion.
           </p>
         </div>
       )}
