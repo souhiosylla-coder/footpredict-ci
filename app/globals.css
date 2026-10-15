@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+:root {
+  --primary: #0d3b2e;
+  --accent: #f97316;
+  --anthracite: #1f2937;
+}
+
+body {
+  @apply bg-anthracite-dark text-white font-sans antialiased;
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #111827;
+}
+::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 3px;
+}
+
+@layer components {
+  .card {
+    @apply bg-anthracite rounded-2xl border border-gray-700/50 shadow-lg;
+  }
+  .btn-primary {
+    @apply bg-accent hover:bg-accent-dark text-white font-semibold py-2.5 px-5 rounded-xl transition-colors;
+  }
+  .btn-ghost {
+    @apply bg-transparent hover:bg-white/10 text-gray-300 font-medium py-2 px-4 rounded-xl transition-colors;
+  }
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+  .prob-bar {
+    @apply h-2 rounded-full bg-gray-700 overflow-hidden;
+  }
+}
