@@ -231,4 +231,3 @@ export function getLeagues(): League[] {
 
 export function getCountries(): string[] {
   return [...new Set(leagues.map((l) => l.country))];
-}
