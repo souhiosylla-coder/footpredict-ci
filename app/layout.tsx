@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { AuthProvider } from "@/lib/auth-context";
 
 export const metadata: Metadata = {
   title: "FootPredict CI – Prédictions football statistiques",
@@ -18,11 +19,13 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-1 container mx-auto px-4 py-6 max-w-6xl">
-          {children}
-        </main>
-        <Footer />
+        <AuthProvider>
+          <Navbar />
+          <main className="flex-1 container mx-auto px-4 py-6 max-w-6xl">
+            {children}
+          </main>
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );

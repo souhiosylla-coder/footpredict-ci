@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Home, History, Star, Menu, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Home, History, Star, Menu, X, LogIn, LogOut, User } from "lucide-react";
 import { useState } from "react";
 import clsx from "clsx";
+import { useAuth } from "@/lib/auth-context";
 
 const links = [
   { href: "/", label: "Matchs", icon: Home },
@@ -14,7 +15,15 @@ const links = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const { user, signOut, loading, configured } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    setOpen(false);
+    router.push("/");
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-primary-dark/95 backdrop-blur border-b border-primary-light/30">
@@ -43,6 +52,37 @@ export function Navbar() {
                 {label}
               </Link>
             ))}
+
+            {!loading && (
+              user ? (
+                <div className="flex items-center gap-2 ml-2">
+                  <span className="flex items-center gap-1.5 text-xs text-gray-400 px-2">
+                    <User size={14} />
+                    <span className="max-w-[120px] truncate">{user.email}</span>
+                  </span>
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm text-gray-300 hover:bg-white/10 hover:text-white"
+                  >
+                    <LogOut size={16} />
+                    Déconnexion
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/connexion"
+                  className={clsx(
+                    "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium ml-1",
+                    pathname === "/connexion"
+                      ? "bg-accent/20 text-accent"
+                      : "bg-accent text-white hover:bg-accent-dark"
+                  )}
+                >
+                  <LogIn size={18} />
+                  Connexion
+                </Link>
+              )
+            )}
           </nav>
 
           <button
@@ -72,6 +112,35 @@ export function Navbar() {
                 {label}
               </Link>
             ))}
+            {!loading &&
+              (user ? (
+                <>
+                  <div className="px-4 py-2 text-xs text-gray-500 truncate">
+                    {user.email}
+                  </div>
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-300 hover:bg-white/10 text-left"
+                  >
+                    <LogOut size={18} />
+                    Déconnexion
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/connexion"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-accent"
+                >
+                  <LogIn size={18} />
+                  Connexion
+                </Link>
+              ))}
+            {!configured && (
+              <p className="px-4 py-2 text-xs text-amber-400/80">
+                Auth désactivée (configurer Supabase)
+              </p>
+            )}
           </nav>
         )}
       </div>
