@@ -93,4 +93,6 @@ export type FilterState = {
   country: string;
   date: string;
   confidence: number;
+  search: string;
+  sort: "date" | "confidence";
 };

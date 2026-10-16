@@ -2,6 +2,7 @@
 
 import { FilterState } from "@/lib/types";
 import { getLeagues, getCountries } from "@/lib/mock-data";
+import { Search } from "lucide-react";
 
 interface Props {
   filters: FilterState;
@@ -19,7 +20,22 @@ export function Filters({ filters, onChange }: Props) {
   return (
     <div className="card p-4 mb-6">
       <h2 className="text-sm font-semibold text-gray-300 mb-3">Filtres</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+
+      <div className="relative mb-3">
+        <Search
+          size={16}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
+        />
+        <input
+          type="search"
+          value={filters.search}
+          onChange={(e) => update("search", e.target.value)}
+          placeholder="Rechercher une équipe..."
+          className="w-full bg-gray-800 border border-gray-700 rounded-xl pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:border-accent"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         <div>
           <label className="block text-xs text-gray-500 mb-1">Ligue</label>
           <select
@@ -68,6 +84,20 @@ export function Filters({ filters, onChange }: Props) {
         </div>
 
         <div>
+          <label className="block text-xs text-gray-500 mb-1">Trier par</label>
+          <select
+            value={filters.sort}
+            onChange={(e) =>
+              update("sort", e.target.value as "date" | "confidence")
+            }
+            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-accent"
+          >
+            <option value="date">Date</option>
+            <option value="confidence">Confiance</option>
+          </select>
+        </div>
+
+        <div className="col-span-2 md:col-span-1">
           <label className="block text-xs text-gray-500 mb-1">
             Confiance min. ({filters.confidence}%)
           </label>
@@ -78,7 +108,7 @@ export function Filters({ filters, onChange }: Props) {
             step={5}
             value={filters.confidence}
             onChange={(e) => update("confidence", Number(e.target.value))}
-            className="w-full accent-accent"
+            className="w-full accent-accent mt-2"
           />
         </div>
       </div>

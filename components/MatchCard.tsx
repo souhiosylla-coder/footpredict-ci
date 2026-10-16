@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { format } from "date-fns";
+import { format, isToday, isTomorrow, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Star } from "lucide-react";
 import clsx from "clsx";
@@ -11,6 +11,13 @@ import { useFavorites } from "@/lib/useFavorites";
 
 interface Props {
   match: Match;
+}
+
+function dateLabel(iso: string): string {
+  const d = parseISO(iso);
+  if (isToday(d)) return "Aujourd'hui · " + format(d, "HH:mm");
+  if (isTomorrow(d)) return "Demain · " + format(d, "HH:mm");
+  return format(d, "EEE d MMM · HH:mm", { locale: fr });
 }
 
 export function MatchCard({ match }: Props) {
@@ -32,13 +39,13 @@ export function MatchCard({ match }: Props) {
       : "bg-amber-500/20 text-amber-400";
 
   return (
-    <div className="card p-4 hover:border-accent/40 transition-colors relative">
+    <div className="card p-4 hover:border-accent/40 transition-all duration-200 relative group">
       <button
         onClick={(e) => {
           e.preventDefault();
           toggleFavorite(match.id);
         }}
-        className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-white/10 z-10"
+        className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-white/10 z-10 transition-colors"
         aria-label="Favori"
       >
         <Star
@@ -50,18 +57,14 @@ export function MatchCard({ match }: Props) {
       <Link href={`/match/${match.id}`} className="block">
         <div className="flex items-center justify-between mb-3 pr-8">
           <span className="text-xs text-gray-400 font-medium">
-            {match.league.name} · {match.league.country}
+            {match.league.name}
           </span>
-          <span className="text-xs text-gray-500">
-            {format(new Date(match.kickoff), "EEE d MMM · HH:mm", {
-              locale: fr,
-            })}
-          </span>
+          <span className="text-xs text-gray-500">{dateLabel(match.kickoff)}</span>
         </div>
 
-        <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="flex items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className="relative w-8 h-8 flex-shrink-0">
+            <div className="relative w-9 h-9 flex-shrink-0">
               <Image
                 src={match.homeTeam.logo}
                 alt={match.homeTeam.name}
@@ -70,18 +73,24 @@ export function MatchCard({ match }: Props) {
                 unoptimized
               />
             </div>
-            <span className="font-semibold text-sm truncate">
-              {match.homeTeam.shortName}
-            </span>
+            <div className="min-w-0">
+              <span className="font-semibold text-sm block truncate">
+                {match.homeTeam.shortName}
+              </span>
+              <FormDots form={match.homeForm} />
+            </div>
           </div>
 
-          <span className="text-gray-500 text-xs font-medium px-2">VS</span>
+          <span className="text-gray-600 text-xs font-bold px-1">VS</span>
 
           <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
-            <span className="font-semibold text-sm truncate text-right">
-              {match.awayTeam.shortName}
-            </span>
-            <div className="relative w-8 h-8 flex-shrink-0">
+            <div className="min-w-0 text-right">
+              <span className="font-semibold text-sm block truncate">
+                {match.awayTeam.shortName}
+              </span>
+              <FormDots form={match.awayForm} className="justify-end" />
+            </div>
+            <div className="relative w-9 h-9 flex-shrink-0">
               <Image
                 src={match.awayTeam.logo}
                 alt={match.awayTeam.name}
@@ -94,17 +103,39 @@ export function MatchCard({ match }: Props) {
         </div>
 
         <div className="grid grid-cols-3 gap-2 mb-3">
-          <ProbBox label="1" value={match.markets.homeWin} active={match.prediction === "1"} />
-          <ProbBox label="N" value={match.markets.draw} active={match.prediction === "X"} />
-          <ProbBox label="2" value={match.markets.awayWin} active={match.prediction === "2"} />
+          <ProbBox
+            label="1"
+            value={match.markets.homeWin}
+            active={match.prediction === "1"}
+          />
+          <ProbBox
+            label="N"
+            value={match.markets.draw}
+            active={match.prediction === "X"}
+          />
+          <ProbBox
+            label="2"
+            value={match.markets.awayWin}
+            active={match.prediction === "2"}
+          />
+        </div>
+
+        {/* Marchés secondaires */}
+        <div className="flex gap-2 mb-3">
+          <span className="text-[10px] px-2 py-0.5 rounded-md bg-gray-800 text-gray-400">
+            O2.5 {match.markets.over25}%
+          </span>
+          <span className="text-[10px] px-2 py-0.5 rounded-md bg-gray-800 text-gray-400">
+            BTTS {match.markets.bttsYes}%
+          </span>
         </div>
 
         <div className="flex items-center justify-between">
           <span className={clsx("badge", predColor)}>
-            Prédiction : {predLabel}
+            {predLabel}
           </span>
           <span className="text-xs text-gray-400">
-            Confiance{" "}
+            Conf.{" "}
             <span
               className={clsx(
                 "font-bold",
@@ -124,6 +155,32 @@ export function MatchCard({ match }: Props) {
   );
 }
 
+function FormDots({
+  form,
+  className,
+}: {
+  form: { result: "W" | "D" | "L" }[];
+  className?: string;
+}) {
+  return (
+    <div className={clsx("flex gap-0.5 mt-0.5", className)}>
+      {form.slice(0, 5).map((f, i) => (
+        <span
+          key={i}
+          className={clsx(
+            "w-1.5 h-1.5 rounded-full",
+            f.result === "W"
+              ? "bg-emerald-500"
+              : f.result === "D"
+              ? "bg-amber-500"
+              : "bg-red-500"
+          )}
+        />
+      ))}
+    </div>
+  );
+}
+
 function ProbBox({
   label,
   value,
@@ -136,7 +193,7 @@ function ProbBox({
   return (
     <div
       className={clsx(
-        "text-center py-1.5 rounded-lg text-xs",
+        "text-center py-1.5 rounded-lg text-xs transition-colors",
         active ? "bg-accent/20 border border-accent/40" : "bg-gray-800/60"
       )}
     >

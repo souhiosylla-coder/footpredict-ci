@@ -15,6 +15,11 @@ body {
   min-height: 100vh;
 }
 
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -26,13 +31,16 @@ body {
   background: #374151;
   border-radius: 3px;
 }
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
 
 @layer components {
   .card {
     @apply bg-anthracite rounded-2xl border border-gray-700/50 shadow-lg;
   }
   .btn-primary {
-    @apply bg-accent hover:bg-accent-dark text-white font-semibold py-2.5 px-5 rounded-xl transition-colors;
+    @apply bg-accent hover:bg-accent-dark text-white font-semibold py-2.5 px-5 rounded-xl transition-colors active:scale-[0.98];
   }
   .btn-ghost {
     @apply bg-transparent hover:bg-white/10 text-gray-300 font-medium py-2 px-4 rounded-xl transition-colors;
@@ -42,5 +50,19 @@ body {
   }
   .prob-bar {
     @apply h-2 rounded-full bg-gray-700 overflow-hidden;
+  }
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+  outline: 2px solid #f97316;
+  outline-offset: 2px;
+}
+
+/* Better touch targets on mobile */
+@media (max-width: 640px) {
+  select,
+  input[type="range"] {
+    min-height: 40px;
   }
 }
