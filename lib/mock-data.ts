@@ -230,4 +230,14 @@ export function getLeagues(): League[] {
 }
 
 export function getCountries(): string[] {
-  return [...new Set(leagues.map((l) => l.country))];
+  const seen: Record<string, boolean> = {};
+  const result: string[] = [];
+  for (let i = 0; i < leagues.length; i++) {
+    const c = leagues[i].country;
+    if (!seen[c]) {
+      seen[c] = true;
+      result.push(c);
+    }
+  }
+  return result;
+}
