@@ -1,18 +1,21 @@
 "use client";
 
 import { FilterState } from "@/lib/types";
-import { getLeagues, getCountries } from "@/lib/mock-data";
 import { Search } from "lucide-react";
 
 interface Props {
   filters: FilterState;
   onChange: (f: FilterState) => void;
+  leagueOptions?: string[];
+  countryOptions?: string[];
 }
 
-export function Filters({ filters, onChange }: Props) {
-  const leagues = getLeagues();
-  const countries = getCountries();
-
+export function Filters({
+  filters,
+  onChange,
+  leagueOptions = [],
+  countryOptions = [],
+}: Props) {
   const update = (key: keyof FilterState, value: string | number) => {
     onChange({ ...filters, [key]: value });
   };
@@ -44,9 +47,9 @@ export function Filters({ filters, onChange }: Props) {
             className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-accent"
           >
             <option value="">Toutes</option>
-            {leagues.map((l) => (
-              <option key={l.id} value={l.name}>
-                {l.name}
+            {leagueOptions.map((l) => (
+              <option key={l} value={l}>
+                {l}
               </option>
             ))}
           </select>
@@ -60,7 +63,7 @@ export function Filters({ filters, onChange }: Props) {
             className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-accent"
           >
             <option value="">Tous</option>
-            {countries.map((c) => (
+            {countryOptions.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>
@@ -103,7 +106,7 @@ export function Filters({ filters, onChange }: Props) {
           </label>
           <input
             type="range"
-            min={40}
+            min={30}
             max={90}
             step={5}
             value={filters.confidence}
