@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -7,20 +8,58 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ArrowLeft, Star, MapPin } from "lucide-react";
 import clsx from "clsx";
-import { getMatchById } from "@/lib/mock-data";
+import { Match } from "@/lib/types";
 import { ProbabilityBar } from "@/components/ProbabilityBar";
 import { useFavorites } from "@/lib/useFavorites";
 
 export default function MatchDetailPage() {
   const params = useParams();
   const id = Number(params.id);
-  const match = getMatchById(id);
+  const [match, setMatch] = useState<Match | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { isFavorite, toggleFavorite } = useFavorites();
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/matches", { cache: "no-store" });
+        const json = await res.json();
+        const found = (json.matches as Match[] | undefined)?.find(
+          (m) => m.id === id
+        );
+        if (!cancelled) {
+          if (!found) setError("Match introuvable ou plus disponible.");
+          setMatch(found ?? null);
+        }
+      } catch {
+        if (!cancelled) setError("Impossible de charger le match.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    if (Number.isFinite(id)) load();
+    else {
+      setError("Identifiant invalide");
+      setLoading(false);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="card p-8 text-center text-gray-400">Chargement…</div>
+    );
+  }
 
   if (!match) {
     return (
       <div className="card p-8 text-center">
-        <p className="text-gray-400 mb-4">Match introuvable.</p>
+        <p className="text-gray-400 mb-4">{error || "Match introuvable."}</p>
         <Link href="/" className="btn-primary inline-block">
           Retour aux matchs
         </Link>
@@ -40,6 +79,7 @@ export default function MatchDetailPage() {
           <ArrowLeft size={18} /> Retour
         </Link>
         <button
+          type="button"
           onClick={() => toggleFavorite(match.id)}
           className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-xl hover:bg-white/10"
         >
@@ -163,10 +203,7 @@ export default function MatchDetailPage() {
       <Section title="Scores exacts les plus probables">
         <div className="grid grid-cols-5 gap-2">
           {match.markets.exactScores.map((s) => (
-            <div
-              key={s.score}
-              className="bg-gray-800/60 rounded-xl py-3 text-center"
-            >
+            <div key={s.score} className="bg-gray-800/60 rounded-xl py-3 text-center">
               <div className="font-bold text-lg">{s.score}</div>
               <div className="text-xs text-gray-400">{s.probability}%</div>
             </div>
@@ -182,21 +219,25 @@ export default function MatchDetailPage() {
       </Section>
 
       <Section title="Confrontations directes">
-        <div className="space-y-2">
-          {match.h2h.map((h, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between bg-gray-800/40 rounded-xl px-4 py-2 text-sm"
-            >
-              <span className="text-gray-500 text-xs w-24">{h.date}</span>
-              <span className="flex-1 text-center">
-                {h.homeTeam}{" "}
-                <span className="font-bold text-accent mx-1">{h.score}</span>{" "}
-                {h.awayTeam}
-              </span>
-            </div>
-          ))}
-        </div>
+        {match.h2h.length === 0 ? (
+          <p className="text-sm text-gray-500">Données H2H non disponibles.</p>
+        ) : (
+          <div className="space-y-2">
+            {match.h2h.map((h, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between bg-gray-800/40 rounded-xl px-4 py-2 text-sm"
+              >
+                <span className="text-gray-500 text-xs w-24">{h.date}</span>
+                <span className="flex-1 text-center">
+                  {h.homeTeam}{" "}
+                  <span className="font-bold text-accent mx-1">{h.score}</span>{" "}
+                  {h.awayTeam}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </Section>
 
       <Section title="Blessures & absences">
@@ -204,18 +245,17 @@ export default function MatchDetailPage() {
           <InjuryBlock team={match.homeTeam.shortName} injuries={match.injuries.home} />
           <InjuryBlock team={match.awayTeam.shortName} injuries={match.injuries.away} />
         </div>
+        <p className="text-xs text-gray-500 mt-2">
+          Les blessures détaillées dépendent de l&apos;abonnement API-Football ;
+          non inventées si absentes.
+        </p>
       </Section>
 
       <Section title="Analyse automatique">
         <ul className="space-y-3">
           {match.analysis.map((a, i) => (
-            <li
-              key={i}
-              className="flex gap-3 text-sm text-gray-300 leading-relaxed"
-            >
-              <span className="text-accent font-bold flex-shrink-0">
-                {i + 1}.
-              </span>
+            <li key={i} className="flex gap-3 text-sm text-gray-300 leading-relaxed">
+              <span className="text-accent font-bold flex-shrink-0">{i + 1}.</span>
               {a}
             </li>
           ))}
@@ -254,30 +294,36 @@ function FormBlock({
   return (
     <div>
       <h3 className="text-sm font-medium text-gray-400 mb-2">{team}</h3>
-      <div className="flex gap-1.5 mb-2">
-        {form.map((f, i) => (
-          <span
-            key={i}
-            className={clsx(
-              "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
-              f.result === "W"
-                ? "bg-emerald-500/30 text-emerald-400"
-                : f.result === "D"
-                ? "bg-amber-500/30 text-amber-400"
-                : "bg-red-500/30 text-red-400"
-            )}
-          >
-            {f.result}
-          </span>
-        ))}
-      </div>
-      <div className="text-xs text-gray-500 space-y-0.5">
-        {form.map((f, i) => (
-          <div key={i}>
-            {f.score} vs {f.opponent}
+      {form.length === 0 ? (
+        <p className="text-sm text-gray-500">Forme non disponible</p>
+      ) : (
+        <>
+          <div className="flex gap-1.5 mb-2">
+            {form.map((f, i) => (
+              <span
+                key={i}
+                className={clsx(
+                  "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
+                  f.result === "W"
+                    ? "bg-emerald-500/30 text-emerald-400"
+                    : f.result === "D"
+                    ? "bg-amber-500/30 text-amber-400"
+                    : "bg-red-500/30 text-red-400"
+                )}
+              >
+                {f.result}
+              </span>
+            ))}
           </div>
-        ))}
-      </div>
+          <div className="text-xs text-gray-500 space-y-0.5">
+            {form.map((f, i) => (
+              <div key={i}>
+                {f.score !== "-" ? `${f.score} vs ${f.opponent || "?"}` : f.result}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -293,7 +339,7 @@ function InjuryBlock({
     <div>
       <h3 className="text-sm font-medium text-gray-400 mb-2">{team}</h3>
       {injuries.length === 0 ? (
-        <p className="text-sm text-gray-500">Aucune absence signalée</p>
+        <p className="text-sm text-gray-500">Aucune donnée disponible</p>
       ) : (
         <ul className="space-y-1.5">
           {injuries.map((inj, i) => (
